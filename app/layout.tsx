@@ -18,8 +18,11 @@ export const viewport: Viewport = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
-  const u = data.user;
-  const name = u ? ((u.user_metadata?.full_name as string) || (u.user_metadata?.name as string) || u.email?.split("@")[0] || "나") : null;
+  let nickname: string | null = null;
+  if (data.user) {
+    const { data: profile } = await supabase.from("profiles").select("nickname").eq("id", data.user.id).maybeSingle();
+    nickname = profile?.nickname ?? "회원";
+  }
 
   return (
     <html lang="ko">
@@ -31,7 +34,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         />
       </head>
       <body>
-        <DiaryShell auth={<AuthChip name={name} />}>{children}</DiaryShell>
+        <DiaryShell auth={<AuthChip nickname={nickname} />}>{children}</DiaryShell>
         <div id="sheet" />
         <div id="toast" />
       </body>
