@@ -48,7 +48,7 @@ export default function DiaryShell({
           <span id="counter">
             TODAY <b>{today}</b> | TOTAL <b>{total}</b>
           </span>
-          <h1 className="svc">✏️ 주웠다 찾았다</h1>
+          <h1 className="svc">✏️ 찾아zoom</h1>
           <div className="topright">
             <span id="badge">⚠ 시제품 · 가짜 데이터</span>
             {auth}

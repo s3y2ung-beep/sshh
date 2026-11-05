@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "주웠다 찾았다 · AI 분실물 찾기 (시제품)",
+  title: "찾아zoom · AI 분실물 찾기 (시제품)",
   description: "찍으면 써주는 캠퍼스 분실물 서비스",
 };
 
