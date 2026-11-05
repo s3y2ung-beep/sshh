@@ -9,3 +9,4 @@ Claude outputs/
 out/
 next-env.d.ts
 *.tsbuildinfo
+!.env.local.example
