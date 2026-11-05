@@ -22,8 +22,10 @@ export default function DiaryShell({
   children,
   today = 0,
   total = 0,
+  auth,
 }: {
   children: React.ReactNode;
+  auth?: React.ReactNode;
   today?: number;
   total?: number;
 }) {
@@ -47,7 +49,10 @@ export default function DiaryShell({
             TODAY <b>{today}</b> | TOTAL <b>{total}</b>
           </span>
           <h1 className="svc">✏️ 주웠다 찾았다</h1>
-          <span id="badge">⚠ 시제품 · 가짜 데이터</span>
+          <div className="topright">
+            <span id="badge">⚠ 시제품 · 가짜 데이터</span>
+            {auth}
+          </div>
         </div>
         <div className="rings" aria-hidden="true">
           <i />

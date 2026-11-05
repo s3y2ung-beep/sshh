@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
+import AuthChip from "@/components/AuthChip";
 import DiaryShell from "@/components/DiaryShell";
+import { createClient } from "@/lib/supabase/server";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -13,7 +15,12 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getUser();
+  const u = data.user;
+  const name = u ? ((u.user_metadata?.full_name as string) || (u.user_metadata?.name as string) || u.email?.split("@")[0] || "나") : null;
+
   return (
     <html lang="ko">
       <head>
@@ -24,7 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body>
-        <DiaryShell>{children}</DiaryShell>
+        <DiaryShell auth={<AuthChip name={name} />}>{children}</DiaryShell>
         <div id="sheet" />
         <div id="toast" />
       </body>
