@@ -1,0 +1,7 @@
+node_modules/
+.env*
+supabase/.temp/
+백업/
+원본/
+결과/
+Claude outputs/

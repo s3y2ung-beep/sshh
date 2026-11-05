@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>주웠다 찾았다 · AI 분실물 찾기 (시제품)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Jua&display=swap" rel="stylesheet">
+<style>
+:root{--y:#FFE766;--y2:#FFF3A8;--ink:#151515;--sky:#BDE6FF;--paper:#FFFDF0;--red:#FF6B6B;--green:#4CC38A}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{background:var(--y);font-family:'Jua','Gaegu',sans-serif;color:var(--ink);font-size:17px;line-height:1.45;
+  background-image:radial-gradient(rgba(0,0,0,.07) 1.5px,transparent 1.6px);background-size:22px 22px}
+#app{max-width:520px;margin:0 auto;min-height:100vh;min-height:100dvh;padding:14px 16px 40px;display:flex;flex-direction:column}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+#badge{position:fixed;top:8px;right:8px;z-index:100;background:#fff;border:2.5px solid var(--ink);border-radius:12px 14px 10px 14px;
+  padding:3px 10px;font-size:12px;transform:rotate(3deg);pointer-events:none;box-shadow:2px 2px 0 var(--ink)}
+.hand{border:3px solid var(--ink);border-radius:24px 28px 22px 30px/28px 22px 30px 24px;background:var(--paper);padding:16px}
+.title{font-size:56px;line-height:1.05;margin:0;color:var(--sky);-webkit-text-stroke:9px var(--ink);paint-order:stroke fill;
+  text-shadow:3px 4px 0 var(--ink);letter-spacing:1px;text-align:center;font-weight:400}
+.title.sm{font-size:34px;-webkit-text-stroke:7px var(--ink);text-shadow:2px 3px 0 var(--ink)}
+.pill{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;background:var(--ink);color:#fff;border:3px solid var(--ink);
+  border-radius:999px;padding:14px 22px;font-size:21px;box-shadow:3px 4px 0 rgba(0,0,0,.25);transition:transform .08s}
+.pill:active{transform:translate(2px,3px);box-shadow:none}
+.pill .ar{color:var(--sky);font-size:24px}
+.pill.light{background:#fff;color:var(--ink)}
+.pill.light .ar{color:var(--ink)}
+.pill.sm{width:auto;padding:8px 16px;font-size:16px;display:inline-flex}
+.pill[disabled]{opacity:.4;pointer-events:none}
+.pill.center{justify-content:center}
+.bubble{position:relative;background:#fff;border:3px solid var(--ink);border-radius:22px;padding:12px 16px;display:inline-block;max-width:92%}
+.bubble::after{content:"";position:absolute;left:22px;bottom:-14px;width:18px;height:18px;background:#fff;border-right:3px solid var(--ink);border-bottom:3px solid var(--ink);transform:rotate(45deg) skew(10deg,10deg);border-bottom-right-radius:6px}
+.bubble.r::after{left:auto;right:30px}
+.stack{display:flex;flex-direction:column;gap:14px}
+.row{display:flex;gap:10px;align-items:center}
+.sp{flex:1}
+.hdr{display:flex;align-items:center;gap:10px;margin:2px 96px 14px 0}
+.hdr h2{margin:0;font-size:22px;font-weight:400}
+.back{background:#fff;border:3px solid var(--ink);border-radius:999px;padding:5px 14px;font-size:15px}
+.steps{display:flex;gap:6px;margin:0 0 14px}
+.steps i{flex:1;height:9px;border:2.5px solid var(--ink);border-radius:9px;background:#fff}
+.steps i.on{background:var(--sky)}
+.steps i.now{background:var(--ink)}
+label.f{display:block;margin-bottom:12px;font-size:15px}
+label.f span{display:block;margin:0 0 4px 4px}
+input[type=text],select,textarea{width:100%;background:#fff;border:3px solid var(--ink);border-radius:16px 18px 14px 18px;padding:10px 14px;font-family:'Gaegu','Jua',sans-serif;font-weight:700;font-size:19px;outline:none}
+input:focus,select:focus,textarea:focus{box-shadow:0 0 0 4px var(--sky)}
+textarea{resize:vertical;min-height:90px}
+.note{font-size:14px;color:#444}
+.tag{display:inline-block;background:var(--sky);border:2.5px solid var(--ink);border-radius:999px;padding:1px 12px;font-size:14px;margin:2px 4px 2px 0}
+.button.tag,button.tag{font-family:inherit;color:inherit;cursor:pointer}
+.tag.q{background:#eee;color:#888;border-style:dashed}
+.st{display:inline-block;border:2.5px solid var(--ink);border-radius:10px;padding:0 9px;font-size:13px;transform:rotate(-3deg)}
+.st.s1{background:var(--green)}.st.s2{background:#FFB84D}.st.s3{background:#ddd}
+.cam{position:relative;border:3px solid var(--ink);border-radius:26px;overflow:hidden;background:#222;aspect-ratio:3/4;max-height:62vh;width:100%}
+.cam video,.cam img{width:100%;height:100%;object-fit:cover;display:block}
+.guide{position:absolute;inset:14% 12%;border:4px dashed rgba(255,255,255,.9);border-radius:22px;pointer-events:none}
+.camMsg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;text-align:center;padding:20px}
+.shutter{width:78px;height:78px;border-radius:50%;background:#fff;border:6px solid var(--ink);box-shadow:0 0 0 5px #fff,3px 5px 0 5px rgba(0,0,0,.2);margin:6px auto}
+.shutter:active{transform:scale(.92)}
+.thumb{width:74px;height:74px;flex:none;border:3px solid var(--ink);border-radius:18px 20px 16px 20px;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:38px;background:#eee}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.blur{filter:blur(9px);transform:scale(1.15)}
+.thumb.big{width:100%;height:210px;font-size:96px;border-radius:24px}
+.card{display:flex;gap:12px;align-items:center;text-align:left;width:100%;background:var(--paper);border:3px solid var(--ink);border-radius:22px 26px 20px 26px/26px 20px 26px 22px;padding:10px;box-shadow:3px 4px 0 rgba(0,0,0,.18)}
+.card h3{margin:0;font-size:18px;font-weight:400}
+.card p{margin:0;font-size:14px;color:#444}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:#fff;border:2.5px solid var(--ink);border-radius:999px;padding:4px 14px;font-size:15px}
+.chip.on{background:var(--ink);color:#fff}
+.radio{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.sw{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.sw button{width:58px;height:32px;border:3px solid var(--ink);border-radius:99px;background:#fff;position:relative;padding:0}
+.sw button::after{content:"";position:absolute;top:2px;left:2px;width:22px;height:22px;border-radius:50%;background:var(--ink);transition:.15s}
+.sw button.on{background:var(--sky)}.sw button.on::after{left:28px}
+/* chat */
+.chat{display:flex;flex-direction:column;flex:1;min-height:0}
+#msgs{flex:1;display:flex;flex-direction:column;gap:16px;padding:6px 2px 14px;overflow-y:auto}
+.m{max-width:88%;padding:10px 14px;border:3px solid var(--ink);border-radius:20px;font-size:17px;word-break:keep-all;overflow-wrap:anywhere}
+.m.ai{background:#fff;align-self:flex-start;border-bottom-left-radius:4px}
+.m.me{background:var(--sky);align-self:flex-end;border-bottom-right-radius:4px}
+.m.wide{max-width:100%;width:100%;background:transparent;border:none;padding:0}
+.cond{display:flex;flex-wrap:wrap;gap:4px;padding:8px 10px;margin-bottom:8px;border-radius:16px;font-size:14px}
+.inbar{display:flex;gap:8px;position:sticky;bottom:0;background:var(--y);padding:8px 0 4px}
+.inbar input{flex:1}
+.cand{background:var(--paper);border:3px solid var(--ink);border-radius:22px 26px 20px 26px;padding:10px;margin-bottom:10px}
+.cand .thumb{width:96px;height:96px}
+.dots span{display:inline-block;animation:b 1s infinite}.dots span:nth-child(2){animation-delay:.15s}.dots span:nth-child(3){animation-delay:.3s}
+@keyframes b{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+#toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 20px;border-radius:99px;z-index:200;opacity:0;pointer-events:none;transition:.25s;max-width:90vw;text-align:center}
+#toast.on{opacity:1}
+#sheet{position:fixed;inset:0;z-index:150;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center}
+#sheet.on{display:flex}
+#sheet .in{background:var(--y);border:3px solid var(--ink);border-radius:28px 28px 0 0;width:100%;max-width:520px;max-height:92vh;overflow:auto;padding:18px}
+@media(min-width:700px){#sheet{align-items:center}#sheet .in{border-radius:28px}#app{padding-top:28px}}
+.spin{width:54px;height:54px;border:7px solid #fff;border-top-color:var(--ink);border-radius:50%;animation:sp 0.9s linear infinite;margin:8px auto}
+@keyframes sp{to{transform:rotate(360deg)}}
+.center{text-align:center}
+.hero{display:flex;flex-direction:column;gap:18px;flex:1;justify-content:center;padding:20px 0}
+.deco{font-size:54px;text-align:center;letter-spacing:8px}
+a.lnk{color:var(--ink);text-decoration:underline;cursor:pointer}
+</style>
+</head>
+<body>
+<div id="badge">시제품 · 가짜 데이터</div>
+<div id="app"></div>
+<div id="sheet"></div>
+<div id="toast"></div>
+
+<script>
+/* ============ 도우미 ============ */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+let toastT;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),2600)}
+const NOW=new Date();
+function ago(days,h,m){const d=new Date(NOW);d.setDate(d.getDate()-days);d.setHours(h,m,0,0);return d}
+function fmtTime(d){const h=d.getHours(),m=d.getMinutes();const ap=h<12?'오전':'오후';const hh=h%12===0?12:h%12;return `${ap} ${hh}시${m?` ${m}분`:''}`}
+function fmtDate(d){return `${d.getMonth()+1}월 ${d.getDate()}일`}
+function dayDiff(d){const a=new Date(NOW);a.setHours(0,0,0,0);const b=new Date(d);b.setHours(0,0,0,0);return Math.round((a-b)/864e5)}
+function dayWord(d){const n=dayDiff(d);return n===0?'오늘':n===1?'어제':n===2?'그제':fmtDate(d)}
+function josa(w,a,b){const c=String(w).trim().slice(-1).charCodeAt(0);if(c<0xAC00||c>0xD7A3)return b;return (c-0xAC00)%28?a:b}
+function mask(text,ans){let t=text||'';if(!ans)return t;const toks=[ans.trim(),...ans.split(/\s+/).filter(x=>x.length>=2)].filter(Boolean);toks.sort((a,b)=>b.length-a.length);toks.forEach(k=>{t=t.split(k).join('○○')});return t}
+const norm=s=>String(s||'').toLowerCase().replace(/[\s.,!?~'"]/g,'');
+
+/* ============ 가짜 데이터 ============ */
+const CATS={
+ '전자기기':{emoji:'🎧'},   // 이어폰·휴대폰·충전기·태블릿 등
+ '지갑·카드':{emoji:'👛'},    // 지갑·학생증·교통카드 등
+ '학용품':{emoji:'📓'},       // 책·노트·필통·계산기 등
+ '화장품':{emoji:'💄'},
+ '의류':{emoji:'🧥'},
+ '악세사리':{emoji:'👓'},     // 안경·시계·목걸이·반지 등
+ '가방':{emoji:'🎒'},
+ '생활용품':{emoji:'☂️'},     // 우산·텀블러·열쇠 등
+ '신발':{emoji:'👟'},
+ '운동용품':{emoji:'🏀'},
+ '기타':{emoji:'📦'}          // 위 범주에 해당하지 않는 모든 물건
+};
+const CUSTOM_CAT='__custom';
+const allCats=()=>Object.keys(CATS);
+const effCat=i=>CATS[i.category]?i.category:'기타';   // 글쓴이가 직접 입력한 종류는 검색·필터에서 '기타'로 묶임
+const catEmoji=c=>(CATS[c]||{emoji:'📦'}).emoji;
+// 시제품용 가짜 AI 분석 결과 (사진을 실제로 읽지는 않음)
+const DEMO_AN={category:'전자기기',color:'흰색',brand:'애플',model:'에어팟 프로',size:'손바닥 안에 들어오는 작은 충전 케이스',features:['충전 케이스에 들어 있음']};
+const COLORS=['흰색','검정','회색','빨강','분홍','주황','노랑','초록','하늘색','파랑','남색','보라','갈색','베이지','투명'];
+const COLORBG={흰색:'#f4f4f4',검정:'#555',회색:'#bbb',빨강:'#ff9a9a',분홍:'#ffc4e1',주황:'#ffc58a',노랑:'#fff08a',초록:'#a5e6b8',하늘색:'#bde6ff',파랑:'#9bbcff',남색:'#8e9cd6',보라:'#d4b8ff',갈색:'#d8b48f',베이지:'#efe0c4',투명:'#e9f6fb'};
+const BUILDINGS=['도서관','학생회관','본관','체육관','기숙사','학생식당','정문'];
+const ADDR='서울 성동구 살곶이길 200';
+const SCHOOL='한양여자대학교';
+const mk=(id,cat,color,brand,title,bld,fl,room,days,h,m,status,storage,text,feat,hidden,q,a,anon=false)=>({id,category:cat,color,brand,title,building:bld,floor:fl,room,found_at:ago(days,h,m),status,storage,text,features:feat,hiddenTags:hidden,verifyQ:q,anon,author:anon?'익명':['지수','민아','하은','서윤','예린','다은'][id%6],photo:{emoji:catEmoji(cat),bg:COLORBG[color]||'#eee'},_a:a});
+const SAMPLE=[
+ mk(1,'전자기기','흰색','애플','흰색 에어팟 프로','도서관','1층','열람실 창가',1,14,40,'보관 중','내가 보관 중','도서관 1층 열람실 창가 자리에서 어제 오후 2시 40분쯤 흰색 에어팟 프로 충전 케이스를 주웠습니다.',['충전 케이스에 들어 있음','애플 로고'],['스티커','별','케이스','각인'],'케이스에 붙은 스티커는 무슨 모양인가요?','별'),
+ mk(2,'전자기기','흰색','애플','흰색 에어팟','도서관','2층','휴게 공간',1,16,10,'보관 중','학생지원팀에 맡김','도서관 2층 휴게 공간 소파 위에서 어제 오후 4시 10분쯤 흰색 무선 이어폰 케이스를 주웠습니다. 학생지원팀에 맡겨 두었어요.',['충전 케이스에 들어 있음','약간 낡음'],['흠집','이니셜','HJ'],'케이스 뒷면에 적힌 알파벳 두 글자는 무엇인가요?','HJ'),
+ mk(3,'지갑·카드','갈색','','갈색 가죽 지갑','학생식당','1층','계산대 앞',1,12,30,'보관 중','학생지원팀에 맡김','학생식당 계산대 앞에서 어제 낮 12시 30분쯤 갈색 가죽 지갑을 주웠습니다.',['카드 수납 칸이 있음','가죽 재질'],['국민','카드','현금'],'지갑 안에 들어 있는 은행 카드는 어느 은행 것인가요?','국민'),
+ mk(4,'지갑·카드','흰색','','학생증','본관','1층','로비 안내데스크',2,10,5,'연락 중','내가 보관 중','본관 1층 로비 안내데스크 옆에서 그제 오전 10시쯤 학생증을 주웠습니다.',['카드 케이스에 들어 있음'],[],'학생증 뒷면에 붙은 것은 무엇인가요?','교통카드',true),
+ mk(5,'생활용품','검정','','검정 장우산','학생회관','1층','입구 우산꽂이',0,9,20,'보관 중','내가 보관 중','학생회관 1층 입구 우산꽂이에서 오늘 오전 9시 20분쯤 검정색 장우산을 주웠습니다.',['접히지 않는 긴 우산','나무 손잡이'],['J자','손잡이'],'우산 손잡이는 어떤 모양인가요?','J자'),
+ mk(6,'생활용품','하늘색','','하늘색 텀블러','체육관','2층','탈의실 앞 벤치',3,18,0,'보관 중','학생지원팀에 맡김','체육관 2층 탈의실 앞 벤치에서 3일 전 저녁에 하늘색 텀블러를 주웠습니다.',['뚜껑이 있음','500ml 정도'],['곰','스티커'],'텀블러에 붙은 스티커 속 동물은 무엇인가요?','곰'),
+ mk(7,'전자기기','검정','삼성','검정 갤럭시 휴대폰','본관','3층','복도 창가',0,11,5,'보관 중','내가 보관 중','본관 3층 복도 창가에서 오늘 오전 11시쯤 투명 케이스를 낀 검정 갤럭시 휴대폰을 주웠습니다.',['투명 케이스','화면이 꺼져 있음'],['고양이','잠금화면','배경'],'휴대폰 잠금화면 배경에는 무엇이 있나요?','고양이'),
+ mk(8,'전자기기','흰색','','흰색 노트북 충전기','도서관','3층','컴퓨터실',4,15,30,'반환 완료','내가 보관 중','도서관 3층 컴퓨터실 책상에서 4일 전 흰색 노트북 충전기를 주웠습니다.',['선이 감겨 있음'],['라벨'],'충전기 선에 붙은 라벨 색은 무엇인가요?','노랑'),
+ mk(9,'악세사리','검정','','검정 뿔테 안경','정문','1층','앞 벤치',1,8,50,'보관 중','경비실','정문 앞 벤치에서 어제 오전 8시 50분쯤 검정 뿔테 안경을 주웠습니다. 경비실에 맡겼어요.',['뿔테','안경집 없음'],['다리','테이프'],'안경 다리에 감겨 있는 것은 무엇인가요?','테이프'),
+ mk(10,'전자기기','검정','삼성','검정 갤럭시 버즈','학생회관','1층','라운지',2,13,15,'보관 중','내가 보관 중','학생회관 1층 라운지 테이블에서 그제 오후 1시 15분쯤 검정 갤럭시 버즈 케이스를 주웠습니다.',['충전 케이스에 들어 있음','콩 모양 케이스'],['키링','줄'],'케이스에 달린 고리 모양은 무엇인가요?','곰돌이',true)
+];
+const SECRETS={};SAMPLE.forEach(i=>{SECRETS[i.id]=i._a;delete i._a});   // 정답은 목록 데이터와 따로 보관
+let nextId=100;
+
+const S={screen:'home',items:SAMPLE,found:null,chat:null,list:{status:'전체',q:'',cat:'',bld:'',banner:''},stream:null};
+
+/* ============ 화면 이동 ============ */
+/* 브라우저 기록: 화면·단계가 바뀔 때마다 pushState, 뒤로 가기(popstate)는 기록을 또 쌓지 않고 화면만 다시 그림 */
+const navState=()=>({screen:S.screen,step:S.screen==='found'&&S.found?S.found.step:null});
+function pushNav(){history.pushState(navState(),'')}
+function leaveLost(){if(S.screen==='lost'&&S.chat){const m=$('#msgs');if(m)S.chat.html=m.innerHTML}}
+function go(screen,opts){
+  leaveLost();
+  const same=S.screen===screen&&screen!=='found';
+  S.screen=screen;
+  if(screen==='found'&&!(opts&&opts.keep)){resetFound()}
+  if(screen==='lost'){initChat()}
+  if(opts&&opts.list)Object.assign(S.list,opts.list);
+  if(!same)pushNav();
+  render();window.scrollTo(0,0);
+}
+function clampStep(step){           // 앞 단계 정보가 없으면 갈 수 없는 단계는 camera로
+  const F=S.found;
+  if(step==='review'||step==='locate'||step==='search')return F.photo?step:'camera';
+  if(step==='detail')return F.photo&&F.place?step:(F.photo?'locate':'camera');
+  if(step==='draft')return F.photo&&F.place&&F.text?step:(F.photo&&F.place?'detail':'camera');
+  return step==='camera'?step:'camera';
+}
+function applyState(st){
+  closeSheet();leaveLost();
+  let screen=st&&st.screen||'home';
+  if(screen==='found'){
+    if(!S.found||S.found.published){screen='home';history.replaceState({screen:'home',step:null},'')}  // 등록 끝난 글쓰기 화면으로는 돌아가지 않음
+    else S.found.step=clampStep(st.step);
+  }
+  if(screen==='lost'&&!S.chat)initChat();
+  S.screen=screen;render();window.scrollTo(0,0);
+}
+window.addEventListener('popstate',e=>applyState(e.state));
+function render(){
+  if(!(S.screen==='found'&&S.found&&S.found.step==='camera'))stopCamera();   // 카메라 화면이 아니면 항상 끔
+  const a=$('#app');
+  if(S.screen==='home')a.innerHTML=vHome();
+  else if(S.screen==='found'){a.innerHTML=vFound();afterFound()}
+  else if(S.screen==='lost'){a.innerHTML=vLost();afterLost()}
+  else if(S.screen==='list')a.innerHTML=vList();
+}
+const hdr=(t,back='go(\'home\')')=>`<div class="hdr"><button class="back" onclick="${back}">← 처음으로</button><h2>${t}</h2></div>`;
+
+/* ============ ① 첫 화면 ============ */
+function vHome(){
+  const kept=S.items.filter(i=>i.status==='보관 중').length;
+  return `<div class="hero">
+   <div class="center"><div class="bubble r" style="font-size:16px">오늘은 누구 물건일까요? 🤔<br><span class="note">${SCHOOL} 분실물, AI가 도와줘요</span></div></div>
+   <div style="margin-top:14px"><h1 class="title">찍으면<br>써주는<br>분실물</h1></div>
+   <div class="deco">🎧👛☂️</div>
+   <div class="stack">
+    <button class="pill" onclick="go('found')"><span>📸 주웠어요</span><span class="ar">➜</span></button>
+    <button class="pill" onclick="go('lost')"><span>🔍 잃어버렸어요</span><span class="ar">➜</span></button>
+    <button class="pill light" onclick="go('list',{list:{banner:''}})"><span>📋 게시글 목록 (보관 중 ${kept}건)</span><span class="ar">➜</span></button>
+   </div></div>`;
+}
+
+/* ============ ② 주웠어요 ============ */
+const FSTEPS=['camera','review','locate','detail','draft'];
+function resetFound(){
+  S.found={step:'camera',photo:null,takenAt:null,geo:S.found?.geo&&S.found.geo.status==='ok'?S.found.geo:{status:'idle'},
+   place:null,floor:'1층',room:'',memo:'',an:{...DEMO_AN,features:[...DEMO_AN.features]},textEdited:false,catCustom:false,
+   text:'',detail:'',anon:false,storage:'내가 보관 중',storageEtc:'',vq:'',va:'',camErr:''};
+  S.found.geo={status:'idle'};
+}
+function setStep(s,push=true){S.found.step=s;if(push)pushNav();render();window.scrollTo(0,0)}
+function stepper(){const i=FSTEPS.indexOf(S.found.step==='search'?'locate':S.found.step);return `<div class="steps">${FSTEPS.map((_,k)=>`<i class="${k<i?'on':k===i?'now':''}"></i>`).join('')}</div>`}
+function vFound(){
+  const F=S.found;let body='';
+  if(F.step==='camera'){
+    body=`${stepper()}<div class="center" style="margin-bottom:10px"><div class="bubble">물건을 네모 안에 넣고 찍어 주세요 📸</div></div><div style="height:6px"></div>
+    <div class="cam" id="cam"><video id="vid" autoplay playsinline muted></video><div class="guide"></div><div class="camMsg" id="camLoad">카메라 켜는 중…</div></div>
+    <div id="camErr"></div>
+    <button class="shutter" id="shot" onclick="shoot()" aria-label="촬영"></button>
+    <div class="note center">위치도 함께 확인하고 있어요 · 갤러리 사진은 올릴 수 없어요</div>`;
+  }else if(F.step==='review'){
+    body=`${stepper()}<div class="cam"><img src="${F.photo}" alt="찍은 사진"></div>
+    <p class="note center">📅 ${fmtDate(F.takenAt)} ${fmtTime(F.takenAt)}에 찍었어요</p>
+    <div class="row"><button class="pill light center" onclick="retake()">다시 찍기</button><button class="pill" onclick="usePhoto()"><span>이 사진 사용</span><span class="ar">➜</span></button></div>`;
+  }else if(F.step==='locate'){
+    body=`${stepper()}${vLocate()}`;
+  }else if(F.step==='search'){
+    body=`${stepper()}${vAddrSearch()}`;
+  }else if(F.step==='detail'){
+    body=`${stepper()}<div class="hand">
+    <div style="margin-bottom:12px">📍 <b>${esc(F.place.building)}</b><br><span class="note">${ADDR}</span></div>
+    <label class="f"><span>층수</span><select onchange="S.found.floor=this.value">${['지하','1층','2층','3층','4층','5층 이상','야외'].map(x=>`<option ${x===F.floor?'selected':''}>${x}</option>`).join('')}</select></label>
+    <label class="f"><span>호수 · 장소 이름 (예: 열람실, 301호)</span><input type="text" value="${esc(F.room)}" oninput="S.found.room=this.value" placeholder="열람실"></label>
+    <label class="f"><span>메모 (선택)</span><input type="text" value="${esc(F.memo)}" oninput="S.found.memo=this.value" placeholder="창가 자리 책상 위"></label>
+    </div><div style="height:14px"></div>
+    <button class="pill" onclick="runAnalysis()"><span>AI에게 글 맡기기</span><span class="ar">➜</span></button>`;
+  }else if(F.step==='analyzing'){
+    body=`<div class="hero center"><div class="spin"></div><div class="bubble" id="anaMsg">사진을 살펴보고 있어요…</div></div>`;
+  }else if(F.step==='draft'){
+    body=`${stepper()}${vDraft()}`;
+  }else if(F.step==='done'){
+    body=`<div class="hero center"><div class="deco">🎉</div><h1 class="title sm">등록 완료!</h1>
+    <div class="bubble" style="align-self:center">글이 <b>보관 중</b> 상태로 올라갔어요.<br>주인이 나타나면 알려드릴게요.</div>
+    <div class="stack" style="margin-top:14px"><button class="pill" onclick="go('list',{list:{status:'전체',q:'',cat:'',bld:'',banner:''}})"><span>목록에서 확인하기</span><span class="ar">➜</span></button>
+    <button class="pill light" onclick="go('lost')"><span>주인 역할로 찾아보기</span><span class="ar">➜</span></button></div></div>`;
+  }
+  const back=F.step==='done'||F.step==='analyzing'?'':hdr('주웠어요');
+  return back+body;
+}
+function afterFound(){if(S.found.step==='camera')startCamera()}
+
+/* --- 카메라 / 위치 --- */
+function stopCamera(){if(S.stream){S.stream.getTracks().forEach(t=>t.stop());S.stream=null}}
+window.addEventListener('pagehide',stopCamera);
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&S.screen==='found'&&S.found?.step==='camera')stopCamera()});
+function startGeo(){
+  const g=S.found.geo;if(g.status==='ok'||g.status==='pending')return;
+  if(!navigator.geolocation){g.status='fail';return}
+  g.status='pending';
+  navigator.geolocation.getCurrentPosition(p=>{Object.assign(g,{status:'ok',lat:p.coords.latitude,lng:p.coords.longitude,acc:Math.round(p.coords.accuracy)});geoUpdated()},
+   e=>{g.status=e.code===1?'denied':'fail';geoUpdated()},{enableHighAccuracy:true,timeout:15000,maximumAge:0});
+}
+function geoUpdated(){if(S.screen==='found'&&S.found.step==='locate')render()}
+async function startCamera(){
+  stopCamera();startGeo();
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){return camFail('이 주소에서는 카메라를 쓸 수 없어요. (https 또는 localhost에서만 켜져요)')}
+  // 1순위: 후면 카메라 → 2순위: 아무 카메라 (노트북 웹캠 등)
+  const tries=[{video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false},{video:true,audio:false}];
+  let err=null;
+  for(const c of tries){
+    try{
+      const st=await navigator.mediaDevices.getUserMedia(c);
+      if(S.screen!=='found'||S.found.step!=='camera'){st.getTracks().forEach(t=>t.stop());return}
+      S.stream=st;const v=$('#vid');v.srcObject=st;v.play().catch(()=>{});$('#camLoad')?.remove();
+      $('#camErr').innerHTML='';$('#shot').style.display='';return;
+    }catch(e){err=e;if(e&&e.name==='NotAllowedError')break}
+  }
+  if(S.screen!=='found'||S.found.step!=='camera')return;
+  const n=err&&err.name;
+  camFail(n==='NotAllowedError'?'카메라 권한이 꺼져 있어요. 주소창 왼쪽 🔒(또는 카메라 아이콘)을 눌러 "허용"으로 바꾼 뒤 다시 시도해 주세요.'
+   :n==='NotFoundError'?'연결된 카메라를 찾지 못했어요. 웹캠이 연결돼 있는지 확인해 주세요.'
+   :n==='NotReadableError'?'다른 프로그램(화상회의 등)이 카메라를 쓰고 있어요. 그 프로그램을 끄고 다시 시도해 주세요.'
+   :'카메라를 켜지 못했어요. 다시 시도해 주세요.');
+}
+function camFail(msg){
+  $('#camLoad')&&($('#camLoad').textContent='카메라가 꺼져 있어요');
+  $('#shot')&&($('#shot').style.display='none');
+  const touch=matchMedia('(pointer:coarse)').matches;   // 휴대폰만 기기 카메라 앱 대체 허용 (노트북은 탐색기가 열리므로 제외)
+  const proto=location.protocol==='file:'?'<p class="note" style="margin:0 0 10px">⚠️ 파일을 직접 연 상태예요. <b>http://localhost:8000/index.html</b> 주소로 열어 주세요.</p>':'';
+  $('#camErr').innerHTML=`<div class="hand center" style="margin:12px 0"><p style="margin:0 0 10px">${esc(msg)}</p>${proto}
+   <button class="pill sm center" onclick="startCamera()">🔄 카메라 다시 켜기</button>
+   ${touch?`<div style="height:8px"></div><label class="pill light sm center" style="cursor:pointer;display:inline-flex">📷 휴대폰 카메라 앱으로 찍기<input type="file" accept="image/*" capture="environment" hidden onchange="fromFile(this)"></label>`:''}</div>`;
+}
+function fromFile(inp){
+  const f=inp.files&&inp.files[0];if(!f)return;
+  const img=new Image();img.onload=()=>{finishShot(img,img.naturalWidth,img.naturalHeight);URL.revokeObjectURL(img.src)};img.src=URL.createObjectURL(f);
+}
+function shoot(){
+  const v=$('#vid');if(!v||!v.videoWidth){toast('카메라가 아직 준비 중이에요');return}
+  finishShot(v,v.videoWidth,v.videoHeight);
+}
+function finishShot(src,w,h){
+  const k=Math.min(1,1280/Math.max(w,h));const c=document.createElement('canvas');c.width=Math.round(w*k);c.height=Math.round(h*k);
+  const x=c.getContext('2d');x.drawImage(src,0,0,c.width,c.height);
+  S.found.photo=c.toDataURL('image/jpeg',.85);S.found.takenAt=new Date();
+  S.found.an.color=guessColor(c);
+  stopCamera();
+  if(S.screen!=='found')return;
+  setStep('review');
+}
+function guessColor(c){
+  try{const t=document.createElement('canvas');t.width=t.height=1;const x=t.getContext('2d');
+   x.drawImage(c,c.width*.3,c.height*.3,c.width*.4,c.height*.4,0,0,1,1);const [r,g,b]=x.getImageData(0,0,1,1).data;
+   const mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=(mx+mn)/510,d=mx-mn;let s=d===0?0:d/(255-Math.abs(2*l*255-255));
+   let h=0;if(d){h=mx===r?((g-b)/d)%6:mx===g?(b-r)/d+2:(r-g)/d+4;h=(h*60+360)%360}
+   if(l<.2)return '검정';if(l>.82&&s<.5)return '흰색';if(s<.18)return l>.6?'흰색':'회색';
+   if(h<15||h>=345)return '빨강';if(h<40)return l<.4?'갈색':'주황';if(h<65)return '노랑';if(h<160)return '초록';if(h<200)return '하늘색';if(h<255)return '파랑';if(h<290)return '보라';return '분홍';
+  }catch(e){return '흰색'}
+}
+function retake(){S.found.photo=null;history.back()}   // 바로 앞 기록(카메라)으로 돌아감
+function usePhoto(){setStep('locate')}
+
+/* --- 여기가 맞나요? --- */
+function vLocate(){
+  const g=S.found.geo;
+  if(g.status==='pending'||g.status==='idle'){
+    return `<div class="hero center"><div class="spin"></div><div class="bubble">📍 위치 확인 중…</div>
+    <button class="pill light center" onclick="setStep('search')">기다리지 않고 직접 입력하기</button></div>`;
+  }
+  if(g.status!=='ok'){
+    S.found.step='search';history.replaceState(navState(),'');S.found.searchNote=g.status==='denied'?'위치 권한이 꺼져 있어요. 장소를 직접 골라 주세요.':'위치를 가져오지 못했어요. 장소를 직접 골라 주세요.';
+    return vAddrSearch();
+  }
+  const b=S.found.place||{building:'도서관'};
+  return `<div class="center" style="margin-bottom:6px"><div class="bubble">📍 여기가 맞나요?</div></div><div style="height:6px"></div>
+  <div class="hand center"><div style="font-size:22px">${SCHOOL} <b>${esc(b.building)}</b></div><div>${ADDR}</div>
+  <p class="note" style="margin:10px 0 0">내 위치 오차: 약 ${g.acc}m<br>※ 시제품이라 실제 주소 변환 대신 캠퍼스 샘플 주소를 보여줘요</p></div>
+  <div style="height:14px"></div>
+  <div class="row"><button class="pill light center" onclick="S.found.searchNote='';setStep('search')">아니요</button>
+  <button class="pill" onclick="S.found.place=S.found.place||{building:'도서관'};setStep('detail')"><span>네, 맞아요</span><span class="ar">➜</span></button></div>`;
+}
+function vAddrSearch(){
+  const F=S.found,q=F.addrQ||'';
+  const list=BUILDINGS.filter(b=>b.includes(q.trim()));
+  return `<div class="center" style="margin-bottom:6px"><div class="bubble">${esc(F.searchNote||'어느 건물에서 주웠나요?')}</div></div><div style="height:8px"></div>
+  <div class="hand"><label class="f"><span>건물 이름으로 검색</span><input type="text" id="aq" value="${esc(q)}" placeholder="예: 도서관" oninput="S.found.addrQ=this.value;fillBld()"></label>
+  <div class="chips" id="bl">${bldChips(list)}</div>
+  <p class="note" style="margin:12px 0 0">※ 지도 핀 이동은 다음 단계에서 만들어요. 시제품에서는 건물 목록에서 골라 주세요.</p></div>`;
+}
+const bldChips=l=>l.length?l.map(b=>`<button class="chip" onclick="pickBld('${b}')">${b}</button>`).join(''):'<span class="note">찾는 건물이 없어요</span>';
+function fillBld(){$('#bl').innerHTML=bldChips(BUILDINGS.filter(b=>b.includes((S.found.addrQ||'').trim())))}
+function pickBld(b){S.found.place={building:b};S.found.searchNote='';
+  setStep(S.found.geo.status==='ok'?'locate':'detail')}
+
+/* --- AI 사진 분석 (가짜) --- */
+async function runAnalysis(){
+  const F=S.found;F.step='analyzing';render();     // 잠깐 보이는 로딩 화면은 기록에 남기지 않음
+  const msgs=['사진을 살펴보고 있어요…','물건 종류를 알아보는 중…','시간과 장소를 정리하는 중…','AI가 글을 쓰고 있어요…'];
+  const alive=()=>S.found===F&&S.screen==='found'&&F.step==='analyzing';
+  for(const m of msgs){const e=$('#anaMsg');if(e)e.textContent=m;await wait(650);if(!alive())return}   // 로딩 중 뒤로 가기하면 중단
+  F.an={...DEMO_AN,features:[...DEMO_AN.features]};F.textEdited=false;F.catCustom=false;
+  F.text=makeText();setStep('draft');
+}
+function itemName(an){const m=an.model||an.category||'물건';return an.brand&&!m.includes(an.brand)&&an.brand!=='애플'?an.brand+' '+m:m}
+function makeText(){
+  const F=S.found,an=F.an;
+  const loc=[F.place.building,F.floor==='지하'?'지하':F.floor==='야외'?'야외':F.floor,F.room].filter(Boolean).join(' ');
+  const name=`${an.color} ${itemName(an)}`;
+  let t=`${SCHOOL} ${loc}에서 ${dayWord(F.takenAt)} ${fmtTime(F.takenAt)}에 ${name}${josa(name,'을','를')} 주웠습니다.`;
+  if(an.features.length)t+=` ${an.features.join(', ')}.`;
+  if(F.memo)t+=` (${F.memo})`;
+  return t;
+}
+function vDraft(){
+  const F=S.found,an=F.an;
+  const pub=mask(F.text+(F.detail?'\n'+F.detail:''),F.va);
+  return `<div class="center" style="margin-bottom:6px"><div class="bubble">AI가 이렇게 써 봤어요 ✍️</div></div><div style="height:8px"></div>
+  <div class="hand" style="margin-bottom:14px"><div class="note" style="margin-bottom:8px">🤖 AI가 본 물건 (시제품: 가짜 분석이에요. 다르면 고쳐 주세요)</div>
+   <div class="row" style="align-items:flex-start;margin-bottom:8px"><div class="thumb"><img src="${F.photo}" alt=""></div>
+   <div class="sp"><label class="f" style="margin-bottom:6px"><span>종류</span><select onchange="chgCat(this.value)">${Object.keys(CATS).filter(k=>k!=='기타').map(k=>`<option ${!F.catCustom&&k===an.category?'selected':''}>${k}</option>`).join('')}<option value="${CUSTOM_CAT}" ${F.catCustom?'selected':''}>직접 입력</option></select></label>
+   ${F.catCustom?`<label class="f" style="margin-bottom:6px"><span>종류 직접 입력</span><input type="text" value="${esc(an.category)}" oninput="setCustomCat(this.value)" placeholder="예: 악기, 공구"></label>`:''}
+   <label class="f" style="margin:0"><span>색상</span><select onchange="S.found.an.color=this.value;S.found.text=makeText();render()">${COLORS.map(k=>`<option ${k===an.color?'selected':''}>${k}</option>`).join('')}</select></label></div></div>
+   <label class="f" style="margin-bottom:6px"><span>물건 이름</span><input type="text" value="${esc(an.model)}" oninput="S.found.an.model=this.value;refreshText()" placeholder="예: 에어팟 프로"></label>
+   <div class="note" style="margin:4px 0">브랜드: ${esc(an.brand||'알 수 없음')} · 크기: ${esc(an.size||'-')}</div>
+   <div class="note" style="margin-bottom:2px"># 해시태그 (눌러서 삭제, 아래에서 추가)</div>
+   <div id="tags">${tagsHTML()}</div>
+   <div class="row" style="margin-top:6px"><input type="text" id="tagIn" class="sp" placeholder="예: 스티커 있음" onkeydown="if(event.key==='Enter'){event.preventDefault();addTag()}"><button class="chip" onclick="addTag()">+ 추가</button></div></div>
+  <div class="hand">
+   <label class="f"><span>게시글 본문 (고쳐 써도 돼요)</span><textarea oninput="S.found.text=this.value;S.found.textEdited=true;pv()">${esc(F.text)}</textarea></label>
+   <label class="f"><span>상세 설명 (선택)</span><textarea style="min-height:60px" oninput="S.found.detail=this.value;pv()" placeholder="예: 케이스 모서리에 작은 흠집이 있어요">${esc(F.detail)}</textarea></label>
+   <div class="sw"><button class="${F.anon?'on':''}" onclick="S.found.anon=!S.found.anon;render()" aria-label="익명"></button><span>익명으로 올리기 <span class="note">(글쓴이: ${F.anon?'익명':'나'})</span></span></div>
+   <div class="note" style="margin-bottom:4px">현재 보관 위치</div>
+   <div class="radio">${['내가 보관 중','학생지원팀에 맡김','직접 입력'].map(x=>`<button class="chip ${F.storage===x?'on':''}" onclick="S.found.storage='${x}';render()">${x}</button>`).join('')}</div>
+   ${F.storage==='직접 입력'?`<label class="f"><span>어디에 있나요?</span><input type="text" value="${esc(F.storageEtc)}" oninput="S.found.storageEtc=this.value" placeholder="예: 경비실"></label>`:''}
+  </div><div style="height:14px"></div>
+  <div class="hand"><div style="margin-bottom:8px">🔒 주인 확인 질문 <span class="note">(선택)</span></div>
+   <label class="f"><span>질문 (주인만 아는 특징을 물어보세요)</span><input type="text" value="${esc(F.vq)}" oninput="S.found.vq=this.value" placeholder="케이스에 붙은 스티커는 무슨 모양인가요?"></label>
+   <label class="f"><span>정답 → 공개 글에서 자동으로 가려져요</span><input type="text" value="${esc(F.va)}" oninput="S.found.va=this.value;pv()" placeholder="별"></label>
+  </div><div style="height:14px"></div>
+  <div class="hand" style="background:#fff"><div class="note">👀 다른 사람에게 보이는 글</div><div id="pv" style="white-space:pre-wrap;margin-top:4px">${esc(pub)}</div>${F.va?'<div class="note" style="margin-top:6px">정답이 되는 말은 ○○로 가렸어요.</div>':''}</div>
+  <div style="height:14px"></div>
+  <button class="pill" onclick="publish()"><span>등록하기</span><span class="ar">➜</span></button>`;
+}
+function pv(){const F=S.found;const e=$('#pv');if(e)e.textContent=mask(F.text+(F.detail?'\n'+F.detail:''),F.va)}
+function chgCat(c){const F=S.found;if(c===CUSTOM_CAT){F.catCustom=true;F.an.category=''}else{F.catCustom=false;F.an.category=c}refreshText();render()}
+function setCustomCat(v){S.found.an.category=v.trim();refreshText()}
+// 본문을 직접 고치지 않았을 때만 AI 문장을 새로 만든다 (고친 글을 덮어쓰지 않기 위해)
+function refreshText(){const F=S.found;if(!F.textEdited){F.text=makeText();const t=$('textarea');if(t&&document.activeElement!==t)t.value=F.text;pv()}}
+function tagsHTML(){return S.found.an.features.map((f,i)=>`<button class="tag" onclick="delTag(${i})" title="삭제">#${esc(f)} ✕</button>`).join('')||'<span class="note">태그가 없어요</span>'}
+function addTag(){
+  const e=$('#tagIn'),v=(e.value||'').trim().replace(/^#+/,'');if(!v)return;
+  const f=S.found.an.features;if(!f.includes(v))f.push(v);
+  e.value='';$('#tags').innerHTML=tagsHTML();refreshText();e.focus();
+}
+function delTag(i){S.found.an.features.splice(i,1);$('#tags').innerHTML=tagsHTML();refreshText()}
+function publish(){
+  const F=S.found,an=F.an;
+  if(!F.text.trim()){toast('본문을 써 주세요');return}
+  if(F.vq.trim()&&!F.va.trim()){toast('확인 질문의 정답도 적어 주세요');return}
+  const id=nextId++;
+  if(!an.category){toast('물건 종류를 입력해 주세요');return}
+  const storage=F.storage==='직접 입력'?(F.storageEtc.trim()||'미정'):F.storage;
+  const pubText=mask(F.text+(F.detail?' '+F.detail:''),F.va);
+  S.items.unshift({id,category:an.category,color:an.color,brand:an.brand,title:`${an.color} ${itemName(an)}`,building:F.place.building,floor:F.floor,room:F.room,
+   found_at:F.takenAt,status:'보관 중',storage,text:pubText,features:an.features,hiddenTags:[],verifyQ:F.vq.trim(),anon:F.anon,author:F.anon?'익명':'나',photo:{img:F.photo},mine:true});
+  if(F.va.trim())SECRETS[id]=F.va.trim();
+  F.published=true;setStep('done');    // 뒤로 가면 applyState가 처음 화면으로 보냄 (다시 등록 불가)
+}
+
+/* ============ 공통: 사진 / 카드 ============ */
+function photoHTML(it,blur){
+  if(it.photo.img)return `<img src="${it.photo.img}" alt="" class="${blur?'blur':''}">`;
+  return `<span class="${blur?'blur':''}" style="display:flex;width:100%;height:100%;align-items:center;justify-content:center;background:${it.photo.bg}">${it.photo.emoji}</span>`;
+}
+const stCls=s=>s==='보관 중'?'s1':s==='연락 중'?'s2':'s3';
+function loc(it){return `${it.building} ${it.floor}${it.room?' '+it.room:''}`}
+
+/* ============ ④ 목록 ============ */
+function filtered(){
+  const L=S.list,q=L.q.trim();
+  return S.items.filter(i=>{
+    if(L.status==='전체'&&i.status==='반환 완료')return false;
+    if(L.status!=='전체'&&i.status!==L.status)return false;
+    if(L.cat&&effCat(i)!==L.cat)return false;
+    if(L.bld&&i.building!==L.bld)return false;
+    if(q&&!(i.title+i.text+i.category+i.brand+i.color+i.building).includes(q))return false;
+    return true;
+  });
+}
+function vList(){
+  const L=S.list;
+  return `${hdr('게시글 목록')}${L.banner?`<div class="center" style="margin-bottom:14px"><div class="bubble">${esc(L.banner)}</div></div><div style="height:8px"></div>`:''}
+  <div class="chips" style="margin-bottom:12px">${['전체','보관 중','연락 중','반환 완료'].map(s=>`<button class="chip ${L.status===s?'on':''}" onclick="S.list.status='${s}';render()">${s}</button>`).join('')}</div>
+  <div class="row" style="margin-bottom:8px"><input type="text" placeholder="🔍 키워드 (예: 에어팟)" value="${esc(L.q)}" oninput="S.list.q=this.value;fillList()"></div>
+  <div class="row" style="margin-bottom:14px"><select onchange="S.list.cat=this.value;fillList()"><option value="">종류 전체</option>${allCats().map(k=>`<option ${k===L.cat?'selected':''}>${esc(k)}</option>`).join('')}</select>
+  <select onchange="S.list.bld=this.value;fillList()"><option value="">건물 전체</option>${BUILDINGS.map(k=>`<option ${k===L.bld?'selected':''}>${k}</option>`).join('')}</select></div>
+  <div class="stack" id="lst">${listHTML()}</div>`;
+}
+function listHTML(){
+  const r=filtered();
+  if(!r.length)return `<div class="hand center">조건에 맞는 글이 없어요 🥲<br><span class="note">필터를 바꿔 보세요</span></div>`;
+  return r.map(i=>`<button class="card" onclick="openItem(${i.id})"><div class="thumb">${photoHTML(i)}</div><div class="sp"><h3>${esc(i.title)} <span class="st ${stCls(i.status)}">${i.status}</span></h3>
+   <p>📍 ${esc(loc(i))}</p><p>🕐 ${dayWord(i.found_at)} ${fmtTime(i.found_at)} · ${i.anon?'익명':esc(i.author)}</p></div></button>`).join('');
+}
+function fillList(){$('#lst').innerHTML=listHTML()}
+function openItem(id){
+  const i=S.items.find(x=>x.id===id);const sh=$('#sheet');
+  sh.innerHTML=`<div class="in"><div class="row" style="margin-bottom:10px"><h2 style="margin:0;font-weight:400;font-size:22px" class="sp">${esc(i.title)}</h2><button class="back" onclick="closeSheet()">닫기 ✕</button></div>
+  <div class="thumb big">${photoHTML(i)}</div>
+  <div class="hand" style="margin-top:12px"><span class="st ${stCls(i.status)}">${i.status}</span>
+   <p style="white-space:pre-wrap;margin:10px 0">${esc(i.text)}</p>
+   <p class="note" style="margin:0">📍 ${esc(loc(i))}<br>🕐 ${fmtDate(i.found_at)} ${fmtTime(i.found_at)}<br>📦 보관 위치: ${esc(i.storage)}<br>✍️ 글쓴이: ${i.anon?'익명':esc(i.author)}
+   ${i.verifyQ?'<br>🔒 주인 확인 질문이 있어요 (질문은 후보가 됐을 때만 보여요)':''}</p></div>
+  ${i.status!=='반환 완료'?`<div style="height:12px"></div><button class="pill light center" onclick="markReturned(${i.id})">🧪 시연용: 글쓴이가 '반환 완료' 처리</button>`:''}</div>`;
+  sh.classList.add('on');sh.onclick=e=>{if(e.target===sh)closeSheet()};
+}
+function closeSheet(){$('#sheet').classList.remove('on')}
+function markReturned(id){
+  const i=S.items.find(x=>x.id===id);i.status='반환 완료';closeSheet();toast('반환 완료! 이제 AI 후보에서 빠져요 ✅');if(S.screen==='list')render();
+}
+
+/* ============ ③ 잃어버렸어요 (AI 대화 흉내) ============ */
+const KW={
+ cat:{'전자기기':['에어팟','이어폰','버즈','헤드셋','헤드폰','휴대폰','핸드폰','폰','스마트폰','아이폰','갤럭시','충전기','어댑터','케이블','태블릿','아이패드','노트북','맥북','전자기기','보조배터리','마우스'],
+  '지갑·카드':['지갑','학생증','카드','신분증','교통카드'],
+  '학용품':['책','교재','노트','공책','필통','볼펜','연필','펜','계산기','학용품','샤프','파일'],
+  '화장품':['화장품','립','틴트','쿠션','향수','파우더','선크림','핸드크림'],
+  '의류':['옷','외투','자켓','재킷','점퍼','후드','코트','목도리','장갑','모자','양말','의류','가디건','패딩'],
+  '악세사리':['안경','시계','목걸이','반지','팔찌','귀걸이','머리끈','헤어핀','악세사리','액세서리'],
+  '가방':['가방','백팩','에코백','파우치','캐리어'],
+  '신발':['신발','운동화','구두','슬리퍼','샌들','부츠'],
+  '운동용품':['공','라켓','운동복','체육복','요가','헬스','줄넘기','운동용품'],
+  '생활용품':['우산','텀블러','물병','보틀','열쇠','키링','자물쇠','도시락','생활용품']},
+ color:{흰색:['흰','하양','하얀','화이트'],검정:['검정','검은','까만','블랙','까맣'],회색:['회색','그레이','은색'],빨강:['빨강','빨간','레드'],분홍:['분홍','핑크'],주황:['주황','오렌지'],노랑:['노랑','노란','옐로'],초록:['초록','녹색','민트'],하늘색:['하늘','연파랑','스카이'],파랑:['파랑','파란','블루'],남색:['남색','네이비'],보라:['보라','퍼플'],갈색:['갈색','브라운','밤색'],베이지:['베이지','크림'],투명:['투명']},
+ brand:{애플:['애플','에어팟','아이폰','맥북'],삼성:['삼성','갤럭시','버즈']},
+ place:{도서관:['도서관','열람실'],학생회관:['학생회관','학회관'],본관:['본관'],체육관:['체육관','헬스'],기숙사:['기숙사','생활관'],학생식당:['학생식당','학식','식당','카페테리아'],정문:['정문','교문']},
+ skip:['몰라','모르','기억','잘 안','없어요','없음','없는','글쎄','패스','넘어']
+};
+// 한 문장에 여러 개가 나오면 '가장 뒤에 말한 것'을 고른다 (예: "에어팟 말고 지갑" → 지갑)
+const pick=(map,t)=>{let best=null,pos=-1;for(const k in map)for(const w of map[k]){const p=t.lastIndexOf(w);if(p>pos){best=k;pos=p}}return best};
+function parseTime(t){
+  let day=null;
+  if(/그저께|그제|이틀 전/.test(t))day=2;else if(/어제|어젯|엊그제/.test(t))day=1;else if(/오늘|아까|방금/.test(t))day=0;
+  const m=t.match(/(\d+)\s*일\s*전/);if(m)day=+m[1];
+  let part=null,from=null,to=null;
+  if(/새벽/.test(t)){part='새벽';from=0;to=6}else if(/아침/.test(t)){part='아침';from=6;to=10}else if(/점심/.test(t)){part='점심쯤';from=11;to=14}
+  else if(/오전/.test(t)){part='오전';from=6;to=12}else if(/오후/.test(t)){part='오후';from=12;to=18}else if(/저녁/.test(t)){part='저녁';from=17;to=21}else if(/밤/.test(t)){part='밤';from=20;to=24}
+  if(day===null&&part===null)return null;
+  return {day,part,from,to};
+}
+function timeLabel(t){
+  if(!t)return '';let s='';
+  if(t.day!==null){const d=ago(t.day,0,0);s+=fmtDate(d)}
+  if(t.part)s+=(s?' ':'')+`${String(t.from).padStart(2,'0')}:00~${String(t.to).padStart(2,'0')}:00`;
+  return s;
+}
+function initChat(){
+  S.chat={cond:{cat:null,color:null,brand:null,place:null,time:null,feat:''},skipped:{},pending:null,asked:{},rounds:0,rejected:new Set(),stage:'collect',target:null,wrong:0,busy:false,started:false,extra:''};
+}
+function vLost(){
+  return `${hdr('잃어버렸어요')}<div class="chat"><div class="hand cond" id="cond"></div><div id="msgs"></div>
+  <div class="chips" id="quick" style="margin-bottom:6px"></div>
+  <form class="inbar" onsubmit="sendMsg(event)"><input type="text" id="inp" placeholder="예: 어제 오후에 도서관에서 흰색 에어팟 잃어버렸어요" autocomplete="off"><button class="pill sm center" style="padding:8px 18px">보내기</button></form></div>`;
+}
+function afterLost(){
+  drawCond();
+  if(S.chat.started&&S.chat.html){$('#msgs').innerHTML=S.chat.html;S.chat.busy=false;scrollMsgs();return}   // 뒤로/앞으로 가기로 돌아오면 대화 복원
+  if(!S.chat.started){S.chat.started=true;S.chat.asked.cat=true;S.chat.pending='cat';aiSay('안녕하세요! 어떤 물건을 잃어버리셨나요? 🔍<br><span class="note">종류·색상·장소·시간을 알려주시면 더 잘 찾아요</span>');
+   quick(['흰색 에어팟 잃어버렸어요','검정 우산','지갑을 잃어버렸어요','화장품 파우치'])}
+}
+function drawCond(){
+  const c=S.chat.cond,sk=S.chat.skipped;
+  const t=(l,v,k)=>v?`<button class="tag" onclick="clearCond('${k}')" title="눌러서 지우기">${l}: ${esc(v)} ✕</button>`:`<span class="tag ${sk[k]?'':'q'}">${l}: ${sk[k]?'모름':'?'}</span>`;
+  $('#cond').innerHTML=`<span class="note" style="width:100%">🤖 AI가 뽑아낸 조건</span>${t('종류',c.cat,'cat')}${t('색상',c.color,'color')}${t('장소',c.place,'place')}${t('시간',timeLabel(c.time),'time')}${c.brand?t('브랜드',c.brand,'brand'):''}${c.feat?t('특징',c.feat,'feat'):''}`;
+}
+function clearCond(k){
+  const C=S.chat;if(C.busy||C.stage==='verify'||C.stage==='done'||C.stage==='direct')return;
+  const names={cat:'종류',color:'색상',place:'장소',time:'시간',brand:'브랜드',feat:'특징'};
+  C.cond[k]=k==='feat'?'':null;delete C.skipped[k];if(k==='cat'||k==='feat'){C.extra=''}
+  drawCond();aiSay(`${names[k]} 조건을 지웠어요. 바뀐 내용을 말씀해 주세요.`);
+}
+function scrollMsgs(){const m=$('#msgs');if(m)setTimeout(()=>window.scrollTo(0,document.body.scrollHeight),30)}
+function add(cls,html){const d=document.createElement('div');d.className='m '+cls;d.innerHTML=html;$('#msgs').appendChild(d);scrollMsgs();return d}
+function aiSay(html){return add('ai',html)}
+function quick(arr){$('#quick').innerHTML=arr.map(a=>`<button class="chip" onclick="sendText(this.textContent)">${esc(a)}</button>`).join('')}
+function sendMsg(e){e.preventDefault();const v=$('#inp').value.trim();if(!v)return;$('#inp').value='';sendText(v)}
+async function sendText(text){
+  const C=S.chat;if(C.busy)return;
+  add('me',esc(text));quick([]);C.busy=true;
+  const typing=aiSay('<span class="dots"><span>●</span><span>●</span><span>●</span></span>');await wait(650);typing.remove();
+  try{
+    if(C.stage==='verify')await handleVerify(text);
+    else if(text==='다시 찾기'){initChat();render()}
+    else if(C.stage==='done'||C.stage==='direct'){aiSay('이 대화는 끝났어요. 처음부터 다시 찾으려면 아래 버튼을 눌러 주세요.');quick(['다시 찾기'])}
+    else await handleCollect(text);
+  }finally{C.busy=false}
+}
+function extract(text){
+  const C=S.chat,c=C.cond;const skip=KW.skip.some(w=>text.includes(w))&&text.length<22;
+  const cat=pick(KW.cat,text),color=pick(KW.color,text),brand=pick(KW.brand,text),place=pick(KW.place,text),time=parseTime(text);
+  // 대화 중에 말이 바뀌면 처음 값에 묶이지 않고 새 값으로 바꾼다
+  if(!cat&&C.pending==='cat'&&!c.cat&&!skip&&!color&&!place&&!time&&text.trim().length>=2){c.cat='기타';delete C.skipped.cat}   // 어느 범주에도 안 맞으면 기타
+  if(cat){if(c.cat&&c.cat!==cat){c.feat='';if(!brand)c.brand=null;C.extra='';C.rejected.clear();C.skipped.cat=false}c.cat=cat;delete C.skipped.cat}
+  if(color){c.color=color;delete C.skipped.color}
+  if(brand)c.brand=brand;
+  if(place){c.place=place;delete C.skipped.place}
+  if(time){c.time=time;delete C.skipped.time}
+  if(/아니|말고|바꿀|정정|다시 생각|틀렸/.test(text)&&c.feat&&!cat){/* 특징 정정: 아래에서 새 특징으로 교체 */c._fix=true}
+  const fw=['스티커','키링','줄','케이스','이름','흠집','각인','줄무늬','로고','고리','끈','캐릭터','잠금화면','배경'].filter(w=>text.includes(w));
+  if(fw.length)c.feat=(c._fix?fw:[...new Set([...c.feat.split(' ').filter(Boolean),...fw])]).join(' ');
+  delete c._fix;
+  C.extra+=' '+text;
+  if(skip&&C.pending&&!(cat||color||place||time))C.skipped[C.pending]=true;
+  else if(C.pending&&C.pending!=='feat'&&C.pending!=='extra'&&!c[C.pending]&&!cat&&!color&&!place&&!time&&!fw.length&&!skip){C.skipped[C.pending]=true;if(C.pending==='place')C.noteUnknown='place'}
+  if(C.pending==='feat'&&!fw.length&&!skip&&text.length>1){c.feat=text.slice(0,30)}
+  drawCond();
+}
+async function handleCollect(text){
+  const C=S.chat;
+  if(C.stage==='extra'){extract(text);C.stage='collect';return doSearch()}
+  extract(text);
+  const c=C.cond;
+  if(!c.cat){C.pending='cat';return aiSay('어떤 종류의 물건인가요? (예: 전자기기, 지갑·카드, 학용품, 화장품, 의류, 악세사리)'),quick(['전자기기','지갑·카드','학용품','화장품','의류','악세사리'])}
+  if(!c.color&&!C.skipped.color){C.pending='color';return aiSay(`${esc(c.cat)}이군요. 색상은 어땠나요?`),quick(['흰색','검정','갈색','잘 기억 안 나요'])}
+  if(!c.place&&!C.skipped.place){C.pending='place';return aiSay('어느 건물 근처에서 잃어버렸을까요?'),quick(['도서관','학생식당','학생회관','잘 모르겠어요'])}
+  if(!c.time&&!C.skipped.time){C.pending='time';return aiSay('언제쯤 잃어버렸나요? (예: 어제 오후, 오늘 점심쯤)'),quick(['오늘 오전','어제 오후','잘 모르겠어요'])}
+  if(!C.asked.feat&&!c.feat){C.asked.feat=true;C.pending='feat';return aiSay(`${c.cat==='전자기기'?'케이스에 스티커나 각인 같은 ':''}눈에 띄는 특징이 있었나요?`),quick(['스티커가 붙어 있어요','특징 없어요'])}
+  C.pending=null;await doSearch();
+}
+function score(it,C){
+  const c=C.cond;let s=0;
+  if(c.color&&it.color===c.color)s+=3;
+  if(c.place&&it.building===c.place)s+=3;
+  if(c.brand&&it.brand===c.brand)s+=2;
+  const txt=norm(C.extra);
+  it.title.split(/\s+/).filter(w=>w.length>=2&&w!==it.color&&w!==it.brand).forEach(w=>{if(txt.includes(norm(w)))s+=2});   // 말한 물건 이름이 제목에 있으면 가점
+  it.features.forEach(f=>{f.split(/\s+/).filter(w=>w.length>=2).forEach(w=>{if(txt.includes(norm(w)))s+=.5})});
+  it.hiddenTags.forEach(w=>{if(txt.includes(norm(w)))s+=2});          // 숨긴 특징은 서버처럼 '점수 계산에만' 사용
+  return s;
+}
+function search(){
+  const C=S.chat,c=C.cond;
+  let pool=S.items.filter(i=>i.status==='보관 중'&&!C.rejected.has(i.id));
+  if(c.cat)pool=pool.filter(i=>effCat(i)===c.cat);
+  let relaxed=false;
+  const t=c.time;
+  const byDate=pool.filter(i=>{
+    if(!t)return true;
+    if(t.day!==null&&dayDiff(i.found_at)!==t.day)return false;
+    if(t.from!==null){const h=i.found_at.getHours()+i.found_at.getMinutes()/60;if(h<t.from-1||h>t.to+1)return false}
+    return true;
+  });
+  if(byDate.length)pool=byDate;else if(t&&pool.length){relaxed=true}
+  return {list:pool.map(i=>({i,s:score(i,C)})).sort((a,b)=>b.s-a.s).slice(0,3).map(x=>x.i),relaxed};
+}
+async function doSearch(){
+  const C=S.chat;C.rounds++;
+  const m=aiSay('🔎 등록된 글을 비교하는 중… <span class="dots"><span>●</span><span>●</span><span>●</span></span>');await wait(1100);m.remove();
+  const {list,relaxed}=search();
+  C.shown=list;
+  if(!list.length){
+    if(C.rounds>=2)return toDirect('더 보여드릴 후보가 없어요.');
+    C.stage='extra';aiSay('비슷한 물건을 찾지 못했어요 😢<br>브랜드, 모양, 크기 중 기억나는 게 있나요?'),quick(['작고 동그래요','브랜드는 모르겠어요']);return;
+  }
+  C.stage='show';
+  aiSay(`비슷한 물건이 <b>${list.length}건</b> 있어요. 이것인가요?${relaxed?'<br><span class="note">날짜가 조금 달라도 비슷한 글을 찾았어요.</span>':''}`);
+  const w=add('wide','');
+  w.innerHTML=list.map(i=>`<div class="cand"><div class="row" style="align-items:flex-start"><div class="thumb">${photoHTML(i,true)}</div>
+   <div class="sp"><h3 style="margin:0;font-weight:400">${esc(i.title)}</h3><p class="note" style="margin:2px 0">📍 ${esc(loc(i))}<br>🕐 ${dayWord(i.found_at)} ${fmtTime(i.found_at)}</p>
+   <button class="pill sm" onclick="mine(${i.id})"><span>이거예요</span><span class="ar">➜</span></button></div></div></div>`).join('')+
+   `<button class="pill light center" onclick="notMine()">모두 아니에요</button><div class="note center" style="margin-top:6px">사진은 주인 확인 전까지 흐리게 보여요</div>`;
+  scrollMsgs();
+}
+async function notMine(){
+  const C=S.chat;if(C.stage!=='show'||C.busy)return;
+  add('me','모두 아니에요');C.shown.forEach(i=>C.rejected.add(i.id));C.stage='collect';
+  await wait(500);
+  if(C.rounds>=2)return toDirect('2번 찾아봤는데도 없었어요.');
+  C.stage='extra';aiSay('아쉽네요. 조금만 더 알려주세요. 브랜드·모양·크기 중 기억나는 게 있나요?<br><span class="note">(예: 작고 동그란 케이스에 줄이 달려 있어요)</span>');quick(['케이스에 줄이 달려 있어요','작고 동그래요','기억 안 나요']);
+}
+function toDirect(msg){
+  const C=S.chat;C.stage='direct';
+  aiSay(`${msg} 😢<br>대화로는 한계가 있어서, <b>직접 검색</b>으로 안내해 드릴게요!`);
+  const w=add('wide','');const cat=C.cond.cat||'';
+  w.innerHTML=`<button class="pill" onclick="go('list',{list:{status:'보관 중',q:'',cat:'${cat}',bld:'',banner:'AI가 못 찾았어요. 직접 훑어보세요!'}})"><span>직접 검색하러 가기</span><span class="ar">➜</span></button>`;
+}
+function mine(id){
+  const C=S.chat;if(C.stage!=='show'||C.busy)return;
+  const it=S.items.find(x=>x.id===id);C.target=it;
+  add('me',`"${esc(it.title)}" 이거예요!`);
+  setTimeout(()=>{
+    if(!it.verifyQ){C.stage='done';return connect(it,'이 글에는 확인 질문이 없어요.')}
+    C.stage='verify';C.wrong=0;
+    aiSay(`글쓴이가 남긴 확인 질문이에요 🔒<br><b>${esc(it.verifyQ)}</b>`);quick(['💡 시연용 정답 보기']);
+  },500);
+}
+async function handleVerify(text){
+  const C=S.chat,it=C.target;
+  if(text.includes('시연용 정답')){aiSay(`(시연용) 정답은 <b>${esc(SECRETS[it.id]||'')}</b>이에요. 실제 서비스에서는 서버만 알고 있어요.`);return}
+  const a=norm(text),b=norm(SECRETS[it.id]);
+  if(a&&b&&(a.includes(b)||b.includes(a))){C.stage='done';return connect(it,'정답이에요! 🎉')}
+  C.wrong++;
+  aiSay(C.wrong>=2?'아직 아닌 것 같아요. 다시 생각해 보시거나 다른 글을 찾아볼까요?':'앗, 글쓴이가 적은 답과 달라요. 다시 입력해 주세요.');
+  quick(['💡 시연용 정답 보기']);
+}
+function connect(it,msg){
+  it.status='연락 중';
+  aiSay(`${msg}<br>사진을 선명하게 보여드릴게요.`);
+  const w=add('wide','');
+  w.innerHTML=`<div class="cand"><div class="thumb big" style="height:160px">${photoHTML(it)}</div><h3 style="margin:8px 0 2px;font-weight:400">${esc(it.title)} <span class="st s2">연락 중</span></h3>
+  <p class="note" style="margin:0">📍 ${esc(loc(it))} · 📦 ${esc(it.storage)}</p></div>
+  <div class="bubble" style="margin:10px 0 14px">📮 글쓴이와 쪽지로 이어져요.<br><span class="note">쪽지는 로그인이 필요해요. (시제품에서는 여기까지 보여줘요)</span></div>
+  <div class="stack"><button class="pill" onclick="go('list',{list:{status:'연락 중',q:'',cat:'',bld:'',banner:''}})"><span>목록에서 상태 보기</span><span class="ar">➜</span></button>
+  <button class="pill light" onclick="go('home')"><span>처음으로</span><span class="ar">➜</span></button></div>`;
+  scrollMsgs();
+}
+
+history.replaceState({screen:'home',step:null},'');   // 처음 열 때 home 상태를 기록에 넣음 (새 기록은 쌓지 않음)
+render();
+</script>
+</body>
+</html>
