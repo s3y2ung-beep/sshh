@@ -87,6 +87,7 @@
 - 비밀 키는 `.env.local`과 Vercel 환경변수에만. `.env*`는 반드시 `.gitignore`에 포함, 절대 커밋 금지
 - AI·카카오 API 호출은 서버(API Route)에서만. 키가 브라우저 코드에 들어가면 안 됨
 - 커밋 메시지는 한국어로 짧게 (예: `feat: 카메라 촬영 화면 추가`)
+- 작업 단위가 끝날 때마다 한국어 커밋 메시지로 커밋할 것 (커밋하면 post-commit 훅이 자동으로 GitHub에 push함)
 - 환경: Windows + PowerShell. 터미널 명령은 PowerShell 기준으로 안내
 - 카메라·위치는 HTTPS에서만 동작 → 휴대폰 테스트는 Vercel 배포 주소나 cloudflared 터널 사용
 
