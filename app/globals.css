@@ -259,3 +259,10 @@ a.back{display:inline-flex;align-items:center}
 /* 입력 안내 문구 */
 .ferr{color:#c0332f;font-size:13px;margin:4px 0 0 2px}
 input[aria-invalid="true"]{outline:2px solid #c0332f;outline-offset:0}
+
+/* 아주 좁은 화면(≤480px): 하단 탭 5개 글자가 잘리지 않게 장식용 시계는 숨김 */
+@media(max-width:480px){
+  #clock{display:none}
+  #tabs .start{padding:0 8px}
+  #tabs .tab{font-size:12px}
+}
