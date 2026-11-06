@@ -115,6 +115,12 @@ export default function PostEditor({ draft, onBack }: { draft: FoundDraft; onBac
         setBusy(false);
         return;
       }
+      // 검색에 쓰일 벡터 만들기 (실패해도 글 등록은 이미 끝났으니 계속 진행)
+      await fetch("/api/items/embed", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: r.id }),
+      }).catch(() => {});
       clearDraft();
       router.push(`/list/${r.id}`);
       router.refresh();

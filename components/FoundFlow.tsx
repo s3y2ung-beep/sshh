@@ -47,6 +47,15 @@ export default function FoundFlow() {
   const [note, setNote] = useState("");
   const reqId = useRef(0);
 
+  // 예전에 올린 내 글 중 검색용 벡터가 없는 것을 조용히 채워 둬요 (4단계 이전에 올린 글)
+  useEffect(() => {
+    void fetch("/api/items/embed", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ missing: true }),
+    }).catch(() => {});
+  }, []);
+
   // 카메라 화면에 들어오자마자 위치 요청 시작 (촬영하는 동안 GPS가 정확해져요)
   useEffect(() => {
     if (!navigator.geolocation) {
