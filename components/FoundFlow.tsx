@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import CameraCapture from "@/components/CameraCapture";
 import KakaoMap from "@/components/KakaoMap";
-import { clearDraft, saveDraft } from "@/lib/found-draft";
+import PostEditor from "@/components/PostEditor";
+import { clearDraft, saveDraft, type FoundDraft } from "@/lib/found-draft";
 
 type Geo =
   | { status: "pending" }
@@ -12,7 +13,7 @@ type Geo =
 
 type Place = { lat: number; lng: number; address: string; building: string; accuracy: number | null };
 type Hit = { name: string; address: string; lat: number; lng: number };
-type Step = "camera" | "confirm" | "fix" | "details" | "done";
+type Step = "camera" | "confirm" | "fix" | "details" | "edit";
 
 // GPS를 못 쓸 때 지도의 처음 위치 (한양여자대학교 근처)
 const DEFAULT_CENTER = { lat: 37.5576, lng: 127.0446 };
@@ -28,7 +29,7 @@ async function reverse(lat: number, lng: number): Promise<{ address: string; bui
   }
 }
 
-const STEP_INDEX: Record<Step, number> = { camera: 0, confirm: 1, fix: 1, details: 2, done: 3 };
+const STEP_INDEX: Record<Step, number> = { camera: 0, confirm: 1, fix: 1, details: 2, edit: 3 };
 
 export default function FoundFlow() {
   const [step, setStep] = useState<Step>("camera");
@@ -128,22 +129,24 @@ export default function FoundFlow() {
     setStep("camera");
   };
 
+  const makeDraft = (p: Place): FoundDraft => ({
+    photo,
+    takenAt,
+    lat: p.lat,
+    lng: p.lng,
+    accuracy: p.accuracy,
+    address: p.address,
+    building: p.building,
+    floor: floor.trim(),
+    room: room.trim(),
+    note: note.trim(),
+  });
+
   const finish = (e: React.FormEvent) => {
     e.preventDefault();
     if (!place) return;
-    saveDraft({
-      photo,
-      takenAt,
-      lat: place.lat,
-      lng: place.lng,
-      accuracy: place.accuracy,
-      address: place.address,
-      building: place.building,
-      floor: floor.trim(),
-      room: room.trim(),
-      note: note.trim(),
-    });
-    setStep("done");
+    saveDraft(makeDraft(place));
+    setStep("edit");
   };
 
   const center = place ?? (geo.status === "ok" ? geo : DEFAULT_CENTER);
@@ -264,27 +267,6 @@ export default function FoundFlow() {
         </div>
       )}
 
-      {step === "done" && place && (
-        <div className="win" style={{ maxWidth: 460, margin: "0 auto", width: "100%" }}>
-          <div className="tb">
-            <span className="t">준비 완료.exe</span>
-            <span className="x" aria-hidden="true" />
-          </div>
-          <div className="wb stack">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <div className="thumb big"><img src={photo} alt="찍은 사진" /></div>
-            <p style={{ margin: 0 }}>
-              📍 {placeLabel}
-              {(floor || room) && <> · {[floor.trim(), room.trim()].filter(Boolean).join(" ")}</>}
-              <br />
-              🕒 {new Date(takenAt).toLocaleString("ko-KR", { month: "long", day: "numeric", hour: "numeric", minute: "2-digit" })}
-              {note.trim() && <><br />📝 {note.trim()}</>}
-            </p>
-            <p className="note" style={{ margin: 0 }}>사진과 위치가 준비됐어요. AI가 글을 써 주는 기능은 다음 단계(3단계)에서 붙어요.</p>
-            <button type="button" className="pill sm" onClick={retake}>다시 찍기</button>
-          </div>
-        </div>
-      )}
-    </div>
+      {step === "edit" && place && <PostEditor draft={makeDraft(place)} onBack={() => setStep("details")} />}    </div>
   );
 }

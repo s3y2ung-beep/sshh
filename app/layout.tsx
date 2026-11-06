@@ -24,6 +24,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     nickname = profile?.nickname ?? "회원";
   }
 
+  // 상단 TODAY(오늘 올라온 글, 한국 시간 기준) / TOTAL(전체 글) 숫자
+  const kstDay = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" }).format(new Date()); // 2026-11-06
+  const [{ count: total }, { count: today }] = await Promise.all([
+    supabase.from("items").select("id", { count: "exact", head: true }),
+    supabase.from("items").select("id", { count: "exact", head: true }).gte("created_at", `${kstDay}T00:00:00+09:00`),
+  ]);
+
   return (
     <html lang="ko">
       <head>
@@ -34,7 +41,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         />
       </head>
       <body>
-        <DiaryShell auth={<AuthChip nickname={nickname} />}>{children}</DiaryShell>
+        <DiaryShell auth={<AuthChip nickname={nickname} />} today={today ?? 0} total={total ?? 0}>{children}</DiaryShell>
         <div id="sheet" />
         <div id="toast" />
       </body>
