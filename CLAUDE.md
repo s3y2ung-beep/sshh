@@ -12,6 +12,8 @@
 - Next.js (App Router, TypeScript) + Tailwind CSS — 모바일 우선 UI, 한국어 서비스
 - Supabase: Auth(로그인), Postgres + pgvector(글·벡터 검색), Storage(사진), Realtime(쪽지)
 - Vercel 배포 (GitHub push → 자동 배포), GitHub 레포
+  - 배포 주소: https://jusweossda.vercel.app (Vercel 프로젝트 `jusweossda`, 2026-11-06 첫 배포)
+  - **main에 push하면 자동 배포**됨. 환경변수(`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`)는 Vercel에 등록 완료
 - 카카오 로컬 API: 좌표 → 주소·건물명 변환 (서버 API Route에서만 호출)
 - 비전 LLM API: 사진 분석, 게시글 작성, 대화 (모델은 아직 미정 — 아래 "결정 대기" 참고)
 
