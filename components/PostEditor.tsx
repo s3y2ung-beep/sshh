@@ -24,6 +24,8 @@ export default function PostEditor({ draft, onBack }: { draft: FoundDraft; onBac
   const [anon, setAnon] = useState(false);
   const [storage, setStorage] = useState<string>(STORAGE_PLACES[0]);
   const [storageEtc, setStorageEtc] = useState("");
+  const [vq, setVq] = useState("");
+  const [va, setVa] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [analyzing, setAnalyzing] = useState(true);
@@ -81,7 +83,12 @@ export default function PostEditor({ draft, onBack }: { draft: FoundDraft; onBac
     setBody(makeDraftText({ place, takenAt: draft.takenAt, color, brand, category: catValue }));
   };
 
-  const ok = !!catValue && body.trim().length >= 5 && (storage !== "기타" || storageEtc.trim().length > 0);
+  // 확인 질문: 질문과 정답은 둘 다 적거나 둘 다 비워야 해요. 정답이 공개 글에 보이면 질문의 의미가 없어서 막아요.
+  const normText = (s: string) => s.toLowerCase().replace(/[\s\p{P}\p{S}]/gu, "");
+  const publicText = normText([title, body, detail, brand, color, size, tags].join(" "));
+  const leak = va.trim().length > 0 && publicText.includes(normText(va));
+  const vqPair = (vq.trim() === "") === (va.trim() === "");
+  const ok = !!catValue && body.trim().length >= 5 && (storage !== "기타" || storageEtc.trim().length > 0) && vqPair && !leak;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,6 +116,8 @@ export default function PostEditor({ draft, onBack }: { draft: FoundDraft; onBac
         post_text: fullText,
         is_anonymous: anon,
         storage_location: storage === "기타" ? `기타: ${storageEtc.trim()}` : storage,
+        verify_question: vq,
+        verify_answer: va,
       });
       if (r.error || !r.id) {
         setError(r.error ?? "글을 등록하지 못했어요.");
@@ -214,6 +223,23 @@ export default function PostEditor({ draft, onBack }: { draft: FoundDraft; onBac
           {storage === "기타" && (
             <input type="text" style={{ marginTop: 8 }} value={storageEtc} maxLength={40} placeholder="보관 장소를 적어 주세요" onChange={(e) => setStorageEtc(e.target.value)} aria-label="보관 장소 직접 입력" />
           )}
+        </div>
+
+        <div className="hand" style={{ marginBottom: 12 }}>
+          <p style={{ margin: "0 0 6px", fontWeight: 700, fontSize: 14 }}>🔒 주인 확인 질문 <small className="note">(선택)</small></p>
+          <p className="note" style={{ margin: "0 0 8px" }}>
+            진짜 주인만 아는 특징을 질문으로 만들어 두면, 주인이 답을 맞혀야 쪽지가 연결돼요. 정답은 다른 사람에게 보이지 않아요.
+          </p>
+          <label className="f">
+            <span>질문</span>
+            <input type="text" value={vq} maxLength={80} placeholder="예: 케이스 안쪽에 붙은 스티커는 무슨 그림인가요?" onChange={(e) => setVq(e.target.value)} />
+          </label>
+          <label className="f" style={{ marginBottom: 0 }}>
+            <span>정답 <small className="note">(공개 글에 쓰지 마세요)</small></span>
+            <input type="text" value={va} maxLength={100} placeholder="예: 토끼" onChange={(e) => setVa(e.target.value)} autoComplete="off" />
+          </label>
+          {leak && <p className="ferr" role="alert">정답이 제목·본문·특징에 그대로 보여요. 그 부분을 지우거나 정답을 다른 특징으로 바꿔 주세요.</p>}
+          {!vqPair && <p className="ferr" role="alert">질문과 정답을 둘 다 적어 주세요. (안 쓰려면 둘 다 비워 두세요)</p>}
         </div>
 
         {error && <p className="ferr" role="alert">{error}</p>}

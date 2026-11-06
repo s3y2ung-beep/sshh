@@ -76,10 +76,21 @@
 
 ## 결정 대기 (내가 정하기 전에는 임의로 정하지 말고 물어볼 것)
 - ~~로그인 방식~~ → **아이디 + 비밀번호(내부 이메일 변환)로 결정** (2026-11-05, 구글 로그인에서 변경)
-- ~~주인 확인 질문 기능 포함 여부~~ → **포함하되 6단계에서 구현**으로 결정 (2026-11-06). DB(`item_secrets`)는 이미 준비됨
+- ~~주인 확인 질문 기능 포함 여부~~ → **포함, 6단계에서 구현 완료**(2026-11-06). 정답은 `item_secrets`에만 저장, 서버가 service_role 키로 읽어 비교(글자가 같거나 AI가 같은 뜻이라고 판단하면 통과, 3번 틀리면 10분 잠금)
 - ~~사용할 AI 모델~~ → **OpenAI `gpt-5.4-mini`**로 결정 (2026-11-06, Claude Sonnet 5.5에서 변경). 키는 `OPENAI_API_KEY`(서버 전용), 모델 이름은 `OPENAI_MODEL`로 바꿀 수 있음. 호출은 Chat Completions + JSON 스키마(structured output)
 - ~~서비스 이름~~ → **찾아zoom으로 결정** (2026-11-05)
 
+## 운영 메모 (현재 상태)
+- 배포: https://jusweossda.vercel.app — Vercel 프로젝트 `jusweossda`, main에 push하면 자동 배포
+- 환경변수(`.env.local`과 Vercel에 같은 이름으로): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`(서버 전용),
+  `KAKAO_REST_API_KEY`(서버 전용), `NEXT_PUBLIC_KAKAO_JS_KEY`(공개용, 카카오에 도메인 등록), `OPENAI_API_KEY`(서버 전용)
+  - Windows PowerShell 5.1에서 `|`로 값을 넘기면 BOM(보이지 않는 문자)이 붙어 URL·키가 망가짐 → 값은 BOM 없는 파일을 만들어 `< 파일`로 넘길 것
+- DB 마이그레이션은 `supabase/migrations/`에 있고 Supabase 대시보드 SQL Editor에서 직접 실행함 (적용 완료: items·secrets·profiles, 아이디 숨김, 임베딩, 쪽지, 확인 질문)
+- AI 검색: 임베딩(pgvector)은 OpenAI 프로젝트에 임베딩 모델 권한이 없어 지금은 못 씀 → **벡터 없이 AI가 최신 글 30개를 직접 비교**하는 방식으로 동작.
+  권한이 열리면(`text-embedding-3-small`) 새 글부터 자동으로 벡터가 만들어지고 벡터 검색을 먼저 씀 (코드는 이미 준비됨)
+- 시연용 샘플: 계정 `demo_sample`(닉네임 "샘플")이 올린 글 15개. 이 계정을 지우면 샘플 글도 함께 지워짐
+- 시험용 계정: `zz_test_0001`, `zz_test_0002` (시연 전에 Supabase Authentication → Users에서 지워도 됨)
+- 알려진 한계: 로그인 없는 AI 대화의 횟수 제한은 서버 메모리 방식(시연용), 확인 질문 잠금도 같은 방식
 ## 작업 규칙
 - **한 번에 한 단계만** 진행. 큰 기능은 먼저 계획을 보여주고 승인받은 뒤 구현
 - 각 작업이 끝나면: 무엇을 했는지 짧게 요약 + 내가 직접 확인하는 방법(어떤 화면에서 무엇을 눌러보면 되는지)

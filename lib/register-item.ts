@@ -19,6 +19,8 @@ export type NewItem = {
   post_text: string;
   is_anonymous: boolean;
   storage_location: string;
+  verify_question: string; // 비우면 확인 질문 없음
+  verify_answer: string; // 정답은 item_secrets에 따로 저장 (브라우저에서 다시 읽을 수 없어요)
 };
 
 const nul = (s: string) => (s.trim() ? s.trim() : null);
@@ -56,6 +58,7 @@ export async function registerItem(photoDataUrl: string, n: NewItem): Promise<{ 
       post_text: n.post_text.trim(),
       is_anonymous: n.is_anonymous,
       storage_location: n.storage_location,
+      verify_question: nul(n.verify_question),
     })
     .select("id")
     .single();
@@ -63,6 +66,16 @@ export async function registerItem(photoDataUrl: string, n: NewItem): Promise<{ 
   if (error || !data) {
     await supabase.storage.from("item-photos").remove([path]);
     return { error: "글을 등록하지 못했어요. 잠시 뒤 다시 시도해 주세요." };
+  }
+
+  // 확인 질문이 있으면 정답을 비밀 표(item_secrets)에 저장. 실패하면 글도 되돌려요(정답 없는 질문이 남으면 아무도 못 맞혀요)
+  if (n.verify_question.trim() && n.verify_answer.trim()) {
+    const sec = await supabase.from("item_secrets").insert({ item_id: data.id, verify_answer: n.verify_answer.trim() });
+    if (sec.error) {
+      await supabase.from("items").delete().eq("id", data.id);
+      await supabase.storage.from("item-photos").remove([path]);
+      return { error: "확인 질문을 저장하지 못했어요. 잠시 뒤 다시 시도해 주세요." };
+    }
   }
   return { id: data.id as number };
 }

@@ -106,7 +106,7 @@ export default async function ItemPage({ params }: { params: Promise<{ id: strin
           ) : myConv ? (
             <Link className="pill" href={`/messages/${myConv}`}><span>💌 쪽지 대화 이어가기</span><span className="ar">➜</span></Link>
           ) : me ? (
-            <ContactButton itemId={item.id} />
+            <ContactButton itemId={item.id} question={item.verify_question} />
           ) : (
             <div className="stack" style={{ gap: 8 }}>
               <Link className="pill" href={`/login?next=${encodeURIComponent(`/list/${item.id}`)}`}><span>🔑 로그인하고 쪽지 보내기</span><span className="ar">➜</span></Link>

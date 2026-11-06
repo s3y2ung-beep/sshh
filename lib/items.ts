@@ -23,12 +23,13 @@ export type Item = {
   post_text: string;
   is_anonymous: boolean;
   storage_location: string;
+  verify_question: string | null; // 질문만 공개. 정답은 item_secrets(서버만 읽음)
   status: Status;
 };
 
 // 목록·상세에서 쓰는 열 (verify_answer 같은 비밀 값은 items에 없어요)
 export const ITEM_COLUMNS =
-  "id,author_id,created_at,found_at,address,building_name,floor,room,location_note,image_path,category,title,brand,color,size,features,post_text,is_anonymous,storage_location,status";
+  "id,author_id,created_at,found_at,address,building_name,floor,room,location_note,image_path,category,title,brand,color,size,features,post_text,is_anonymous,storage_location,verify_question,status";
 
 const TZ = "Asia/Seoul"; // 서버(UTC)에서도 한국 시간으로 보이게
 
