@@ -16,7 +16,7 @@ type Hit = { name: string; address: string; lat: number; lng: number };
 type Step = "camera" | "confirm" | "fix" | "details" | "edit";
 
 // GPS를 못 쓸 때 지도의 처음 위치 (한양여자대학교 근처)
-const DEFAULT_CENTER = { lat: 37.5576, lng: 127.0446 };
+const DEFAULT_CENTER = { lat: 37.558968, lng: 127.049414 }; // 한양여자대학교(살곶이길 200)
 
 async function reverse(lat: number, lng: number): Promise<{ address: string; building: string } | null> {
   try {

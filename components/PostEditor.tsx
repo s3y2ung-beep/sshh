@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FoundDraft } from "@/lib/found-draft";
 import { clearDraft } from "@/lib/found-draft";
 import { CATEGORIES, STORAGE_PLACES, makeDraftText, makeTitle, placeText } from "@/lib/items";
@@ -26,7 +26,47 @@ export default function PostEditor({ draft, onBack }: { draft: FoundDraft; onBac
   const [storageEtc, setStorageEtc] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [analyzing, setAnalyzing] = useState(true);
+  const [aiMsg, setAiMsg] = useState("");
+  const started = useRef(false);
 
+  // AI가 사진·위치·시간을 보고 칸을 채워 줘요. 실패해도 직접 쓸 수 있어요.
+  const runAi = async () => {
+    setAnalyzing(true);
+    setAiMsg("");
+    try {
+      const r = await fetch("/api/ai/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ photo: draft.photo, takenAt: draft.takenAt, place }),
+      });
+      const j = (await r.json()) as {
+        error?: string; category?: string; kind?: string; color?: string; brand?: string; size?: string;
+        features?: string[]; title?: string; post_text?: string;
+      };
+      if (!r.ok || !j.post_text) throw new Error(j.error);
+      setCategory(j.category ?? "기타");
+      setCustomCat(j.category === "기타" ? j.kind ?? "" : "");
+      setColor(j.color ?? "");
+      setBrand(j.brand ?? "");
+      setSize(j.size ?? "");
+      setTags((j.features ?? []).join(", "));
+      setTitle(j.title ?? "");
+      setBody(j.post_text);
+      setAiMsg("AI가 사진을 보고 써 봤어요. 틀린 곳은 고쳐 주세요.");
+    } catch (e) {
+      setAiMsg(e instanceof Error && e.message ? e.message : "AI가 글을 쓰지 못했어요. 직접 고쳐 쓰거나 아래 버튼을 눌러 주세요.");
+    }
+    setAnalyzing(false);
+  };
+
+  useEffect(() => {
+    if (started.current) return; // 개발 모드에서 두 번 부르지 않게
+    started.current = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void runAi();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const catValue = category === "기타" ? customCat.trim() || "기타" : category;
   const features = tags
     .split(/[,#\s]+/)
@@ -91,6 +131,14 @@ export default function PostEditor({ draft, onBack }: { draft: FoundDraft; onBac
         <span className="x" aria-hidden="true" />
       </div>
       <form className="wb" onSubmit={submit}>
+        {analyzing && (
+          <div role="status" style={{ marginBottom: 12 }}>
+            <p style={{ margin: 0 }}>AI가 글을 쓰고 있어요…</p>
+            <div className="spin" aria-hidden="true" />
+          </div>
+        )}
+        {!analyzing && aiMsg && <p className="note" style={{ margin: "0 0 12px" }}>🤖 {aiMsg}</p>}
+        <fieldset disabled={analyzing || busy} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <div className="thumb big" style={{ marginBottom: 12 }}><img src={draft.photo} alt="찍은 사진" /></div>
 
@@ -125,10 +173,10 @@ export default function PostEditor({ draft, onBack }: { draft: FoundDraft; onBac
           <input type="text" value={tags} maxLength={100} placeholder="예: 스티커, 케이스 긁힘" onChange={(e) => setTags(e.target.value)} />
         </label>
 
-        <div className="row" style={{ marginBottom: 12 }}>
+        <div className="row" style={{ marginBottom: 12, flexWrap: "wrap" }}>
+          <button type="button" className="pill sm" onClick={() => void runAi()}>🤖 AI로 다시 쓰기</button>
           <button type="button" className="pill sm" onClick={regenerate}>✨ 입력한 정보로 초안 만들기</button>
         </div>
-        <p className="note" style={{ margin: "0 0 12px" }}>AI가 글을 써 주는 기능은 곧 붙어요. 지금은 입력한 정보로 만든 초안을 고쳐서 올려 주세요.</p>
 
         <label className="f">
           <span>제목 <small className="note">(비우면 자동으로 만들어요)</small></span>
@@ -167,6 +215,7 @@ export default function PostEditor({ draft, onBack }: { draft: FoundDraft; onBac
           <button type="submit" className="pill" disabled={!ok || busy}>{busy ? "등록 중…" : "등록하기"}</button>
           <button type="button" className="pill" onClick={onBack} disabled={busy}>이전으로</button>
         </div>
+        </fieldset>
         {!ok && <p className="note" style={{ margin: "8px 0 0" }}>물건 종류를 고르고 본문을 5자 이상 적으면 등록할 수 있어요.</p>}
       </form>
     </div>
