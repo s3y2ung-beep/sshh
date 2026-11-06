@@ -9,6 +9,7 @@ const TABS = [
   { href: "/found", label: "주웠어요", short: "주웠어요" },
   { href: "/lost", label: "잃어버렸어요", short: "잃었어요" },
   { href: "/list", label: "게시글 목록", short: "목록" },
+  { href: "/messages", label: "쪽지", short: "쪽지" },
 ];
 
 function clockText() {

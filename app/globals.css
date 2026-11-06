@@ -148,6 +148,8 @@ button.tag{font-family:inherit;cursor:pointer;min-height:32px}
 .m::before{display:block;font:12px/1.6 var(--pix);margin-bottom:1px}
 .m.ai{align-self:flex-start;border-left:3px solid var(--tab)}
 .m.ai::before{content:"AI도우미 님의 말:";color:var(--tabd)}
+.m.peer{align-self:flex-start;border-left:3px solid var(--tab)}
+.m.peer::before{content:attr(data-who) " 님의 말:";color:var(--tabd)}
 .m.me{align-self:flex-end;text-align:right;border-right:3px solid var(--red)}
 .m.me::before{content:"나의 말:";color:var(--redt)}
 .m.wide{max-width:100%;width:100%;border:none;padding:0;align-self:stretch;text-align:left}
