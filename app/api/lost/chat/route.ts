@@ -110,12 +110,15 @@ export async function POST(request: Request) {
       ],
     });
 
+    // 찾아볼 만큼 정보가 모였는지는 AI의 enough 값이 아니라 뽑힌 정보로 서버가 직접 판단해요 (종류 + 다른 단서 1개 이상)
+    const hasKind = !!(ex.category || ex.kind);
+    const hasClue = !!(ex.color || ex.brand || ex.size || ex.place || ex.date_from || ex.features.length);
+    const hasSome = hasKind || !!(ex.color || ex.brand || ex.features.length);
     // 정보가 부족해도 3번째 답변부터는 일단 찾아봐요 (계속 묻기만 하면 답답해요)
-    const hasSome = !!(ex.category || ex.kind || ex.color || ex.brand || ex.features.length);
-    if (!ex.enough && !(userTurns >= 3 && hasSome)) {
-      return json({ reply: clean(ex.reply, 200) || "어떤 물건을 잃어버리셨나요?", candidates: [], searched: false });
+    if (!(hasKind && hasClue) && !(userTurns >= 3 && hasSome)) {
+      const ask = ex.enough ? "조금만 더 알려 주세요. 물건의 종류와 색깔, 잃어버린 장소 중 기억나는 걸 말씀해 주세요." : clean(ex.reply, 200);
+      return json({ reply: ask || "어떤 물건을 잃어버리셨나요?", candidates: [], searched: false });
     }
-
     // 2) 검색: 날짜·종류 필터 + 벡터 유사도
     const supabase = await createClient();
     const queryText = embeddingText({
